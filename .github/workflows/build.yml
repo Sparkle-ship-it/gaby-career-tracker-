@@ -1,1 +1,45 @@
+name: Build Georgia Career Tracker
+
+on:
+  workflow_dispatch:
+    inputs:
+      subject:
+        description: "Subject to embed in prompts (e.g., 'Gaby — Georgia-based R&B artist — 2025 roadmap')"
+        required: true
+        default: "Gaby — Georgia-based R&B artist — 2025 roadmap"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Generate Excel + CSVs (Georgia-first)
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL }}  # optional; set to gpt-5-mini if you have it
+        run: |
+          python scripts/generate_career_tracker.py --subject "${{ inputs.subject }}"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: gaby-career-tracker
+          path: |
+            outputs/career_action_tracker.xlsx
+            outputs/csv/*.csv
+            outputs/run_meta.json
+          if-no-files-found: error
 
